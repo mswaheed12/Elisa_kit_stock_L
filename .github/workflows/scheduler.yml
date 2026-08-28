@@ -1,0 +1,37 @@
+name: Lab Inventory Automation Clock
+
+on:
+  schedule:
+    - cron: '0 9 * * 0'      # Runs automatically every Sunday at 9:00 AM UTC
+    - cron: '0 9 */3 * *'    # Runs automatically every 3 days at 9:00 AM UTC
+
+jobs:
+  run-checks:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository Code
+        uses: actions/checkout@v3
+
+      - name: Load Python Environment
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+
+      - name: Install Missing Packages
+        run: pip install pandas
+
+      - name: Process Sunday Weekly Report
+        if: github.event.schedule == '0 9 * * 0'
+        env:
+          SENDER_EMAIL: ${{ secrets.SENDER_EMAIL }}
+          SENDER_PASSWORD: ${{ secrets.SENDER_PASSWORD }}
+          RECEIVER_EMAIL: ${{ secrets.RECEIVER_EMAIL }}
+        run: python check_inventory.py sunday
+
+      - name: Process 3-Day Stock Scan
+        if: github.event.schedule == '0 9 */3 * *'
+        env:
+          SENDER_EMAIL: ${{ secrets.SENDER_EMAIL }}
+          SENDER_PASSWORD: ${{ secrets.SENDER_PASSWORD }}
+          RECEIVER_EMAIL: ${{ secrets.RECEIVER_EMAIL }}
+        run: python check_inventory.py scan
