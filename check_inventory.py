@@ -88,7 +88,8 @@ critical_rows = df[df['Stock Status'].str.upper().fillna('').str.contains('CRITI
 low_rows = df[df['Stock Status'].str.upper().fillna('').str.contains('LOW')]
 
 # Read runtime execution parameters passed by GitHub workspace scheduler action
-run_mode = sys.argv[1] if len(sys.argv) > 1 else "scan"
+html += "<h4>🚨 Critical Action Required:</h4><table border='1' cellpadding='5' style='border-collapse: collapse;'><tr><th>Product</th><th>Lot</th><th>Runs Left</th></tr>""
+
 
 if run_mode == "sunday":
     # Build email body structure
@@ -126,5 +127,5 @@ elif run_mode == "scan":
                 html += f"<li><b>{r['Elisa Kit Name']}</b> (Lot: {r['Lot no.']})</li>"
             html += "</ul>"
             
-        # Standard scans run fast without bloating standard text warnings with files
-        send_scheduled_email(subject, html, attach_file=False)
+     html += "<h4>🚨 Critical Action Required:</h4><table border='1' cellpadding='5' style='border-collapse: collapse;'><tr><th>Product</th><th>Lot</th><th>Runs Left</th></tr>"
+
