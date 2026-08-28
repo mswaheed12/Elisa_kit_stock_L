@@ -1,11 +1,12 @@
 name: Lab Inventory Automation Clock
 
 on:
+  workflow_dispatch:        # 👈 This line adds the manual "Run workflow" button!
   schedule:
-    - cron: '0 9 * * 0'      # Runs automatically every Sunday at 9:00 AM UTC
-    - cron: '0 9 */3 * *'    # Runs automatically every 3 days at 9:00 AM UTC
-
+    - cron: '0 9 * * 0'      # Runs automatically every Sunday at 12:00 PM UTC
+    - cron: '0 9 */3 * *'    # Runs automatically every 3 days at 12:00 PM UTC
 jobs:
+
   run-checks:
     runs-on: ubuntu-latest
     steps:
