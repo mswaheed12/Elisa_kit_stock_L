@@ -12,7 +12,6 @@ from email import encoders
 CSV_FILENAME = "ELISA_KIT_STOCK_ALARM_VBA_READY.csv"
 
 def send_scheduled_email(subject, html_body, attach_file=False):
-    # Retrieve secure access variables out from GitHub vault environment
     smtp_server = os.environ.get("SMTP_SERVER", "://gmail.com")
     port = int(os.environ.get("SMTP_PORT", 587))
     sender = os.environ.get("SENDER_EMAIL")
@@ -34,29 +33,21 @@ def send_scheduled_email(subject, html_body, attach_file=False):
         msg['From'] = sender
         msg['To'] = receiver
         msg['Subject'] = subject
-        
-        # Attach the primary HTML text layout report body
         msg.attach(MIMEText(html_body, 'html'))
         
-        # --- CSV ATTACHMENT COMPILER BLOCK ---
         if attach_file and os.path.exists(CSV_FILENAME):
             try:
-                # Open up inventory source data tracking log sheet
                 with open(CSV_FILENAME, "rb") as attachment:
                     part = MIMEBase("application", "octet-stream")
                     part.set_payload(attachment.read())
                 
-                # Encode binary contents into a safe payload delivery format
                 encoders.encode_base64(part)
-                
-                # Set up download filename header attachment properties
                 timestamp = datetime.now().strftime('%Y-%m-%d')
                 attachment_name = f"ELISA_Lab_Inventory_Report_{timestamp}.csv"
                 part.add_header(
                     "Content-Disposition",
                     f"attachment; filename= {attachment_name}",
                 )
-                
                 msg.attach(part)
             except Exception as attachment_err:
                 print(f"Warning: Failed to append data attachment: {attachment_err}")
@@ -66,7 +57,7 @@ def send_scheduled_email(subject, html_body, attach_file=False):
     server.quit()
     print("Scheduled email batch dispatch with attachments processed successfully.")
 
-# Parse structural raw spreadsheet elements
+# Parse spreadsheet
 with open(CSV_FILENAME, "r", encoding="utf-8", errors="ignore") as f:
     lines = f.readlines()
 header_idx = 0
@@ -83,16 +74,12 @@ if 'Elisa Kit Name' in df.columns:
 
 exp_col = 'Remaining times of Experiment' if 'Remaining times of Experiment' in df.columns else 'Remaining times of Experiment  '
 
-# Compile active alert tracking targets
 critical_rows = df[df['Stock Status'].str.upper().fillna('').str.contains('CRITICAL|FLASH')]
 low_rows = df[df['Stock Status'].str.upper().fillna('').str.contains('LOW')]
 
-# Read runtime execution parameters passed by GitHub workspace scheduler action
-html += "<h4>🚨 Critical Action Required:</h4><table border='1' cellpadding='5' style='border-collapse: collapse;'><tr><th>Product</th><th>Lot</th><th>Runs Left</th></tr>""
-
+run_mode = sys.argv[1] if len(sys.argv) > 1 else "scan"
 
 if run_mode == "sunday":
-    # Build email body structure
     subject = f"📋 Weekly Lab Inventory Status Report - {datetime.now().strftime('%Y-%m-%d')}"
     html = f"""<h3>Weekly Lab Inventory Overview Status Summary</h3>
     <p>Please find attached the complete raw ledger <b>(.CSV file spreadsheet)</b> for your reference.</p>
@@ -104,12 +91,11 @@ if run_mode == "sunday":
     </ul>
     """
     if not critical_rows.empty:
-        html += "<h4>🚨 Critical Action Required:</h4><table border='1' cellpadding='5' style='border-collapse: collapse;'><tr><th>Product</th><th>Lot</th><th>Runs Left</th></tr>""
+        html += "<h4>🚨 Critical Action Required:</h4><table border='1' cellpadding='5' style='border-collapse: collapse;'><tr><th>Product</th><th>Lot</th><th>Runs Left</th></tr>"
         for _, r in critical_rows.iterrows():
             html += f"<tr><td>{r['Elisa Kit Name']}</td><td>{r['Lot no.']}</td><td style='color:red;'>{r[exp_col]}</td></tr>"
         html += "</table>"
         
-    # Trigger message dispatch with file generation flag set to True
     send_scheduled_email(subject, html, attach_file=True)
 
 elif run_mode == "scan":
@@ -127,5 +113,4 @@ elif run_mode == "scan":
                 html += f"<li><b>{r['Elisa Kit Name']}</b> (Lot: {r['Lot no.']})</li>"
             html += "</ul>"
             
-     html += "<h4>🚨 Critical Action Required:</h4><table border='1' cellpadding='5' style='border-collapse: collapse;'><tr><th>Product</th><th>Lot</th><th>Runs Left</th></tr>"
-
+        send_scheduled_email(subject, html, attach_file=False)
