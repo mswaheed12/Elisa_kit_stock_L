@@ -13,7 +13,7 @@ CSV_FILENAME = "ELISA_KIT_STOCK_ALARM_VBA_READY.csv"
 
 def send_scheduled_email(subject, html_body, attach_file=False):
     smtp_server = os.environ.get("SMTP_SERVER", "://gmail.com")
-    port = int(os.environ.get("SMTP_PORT", 587))
+    port = int(os.environ.get("SMTP_PORT", "587"))
     sender = os.environ.get("SENDER_EMAIL")
     password = os.environ.get("SENDER_PASSWORD")
     raw_receivers = os.environ.get("RECEIVER_EMAIL")
